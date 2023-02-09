@@ -12,15 +12,20 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] PlayerInput playerInput;
     [SerializeField] Vector2 movement;
     [SerializeField] GameObject torso;
-    Vector3 mouseToGroundPoint;
-
+    public Vector3 mouseToGroundPoint;
+    Vector3 dir;
     [Header("Jump")]
     [SerializeField] float coyoteTime;
     [SerializeField] float jumpBufferTime;
     [SerializeField] float coyoteTimeCounter;
     [SerializeField] float jumpBufferCounter;
     [SerializeField] bool isGrounded;
-    
+
+    [Header("Attacking")]
+    [SerializeField] GameObject meleeWeaponEquipped;
+    [SerializeField] GameObject rangedWeaponEquipped;
+    [SerializeField] bool isMeleeWeaponEquipped;
+    [SerializeField] bool isRangedWeaponEquipped;
 
     Rigidbody playerRB;
     void Awake()
@@ -66,7 +71,7 @@ public class PlayerMovement : MonoBehaviour
         if (Physics.Raycast(mouseRay, out mouseRayHit, Mathf.Infinity, (1 << 3)))
         {
             mouseToGroundPoint = mouseRayHit.point;
-            Vector3 dir = torso.transform.position - mouseToGroundPoint;
+            dir = torso.transform.position - mouseToGroundPoint;
             dir.y = 0;
             torso.transform.forward = dir;
         }
@@ -74,12 +79,12 @@ public class PlayerMovement : MonoBehaviour
     private void HandleInput()
     {
         //dodge
-        if (playerInput.actions["Dodge"].IsPressed())
+        if (playerInput.actions["Dodge"].WasPressedThisFrame())
         {
-            playerRB.AddForce(movement * playerDodgePower, ForceMode.Impulse);
+            playerRB.AddForce(dir * playerDodgePower, ForceMode.Impulse);
         }
         //Jump
-        if (playerInput.actions["Jump"].IsPressed() && jumpBufferCounter > 0 && coyoteTimeCounter > 0)
+        if (playerInput.actions["Jump"].WasPressedThisFrame() && jumpBufferCounter > 0 && coyoteTimeCounter > 0)
         {
             playerRB.AddForce(Vector3.up * playerJumpPower, ForceMode.Impulse);
             isGrounded = false;
@@ -89,9 +94,38 @@ public class PlayerMovement : MonoBehaviour
             coyoteTimeCounter = 0;
         }
         //Fire
-        if (playerInput.actions["Fire"].IsPressed())
+        if (playerInput.actions["Fire"].WasPressedThisFrame())
         {
-            FindObjectOfType<Weapon>().SwingWeapon();
+            if (isMeleeWeaponEquipped == true)
+            {
+                FindObjectOfType<Weapon>().SwingWeapon();
+            }
+            else if (isRangedWeaponEquipped)
+            {
+                FindObjectOfType<RangedWeapon>().FireWeapon();
+            }
+
+        }
+        
+        //Change Main Weapon
+        if(playerInput.actions["SwapWeapon"].WasPressedThisFrame())
+        {
+            if (isMeleeWeaponEquipped)
+            {
+                isMeleeWeaponEquipped = false;
+                meleeWeaponEquipped.SetActive(false);
+                isRangedWeaponEquipped = true;
+                rangedWeaponEquipped.SetActive(true);
+
+
+            }
+            else if (isRangedWeaponEquipped)
+            {
+                isRangedWeaponEquipped = false;
+                rangedWeaponEquipped.SetActive(false);
+                isMeleeWeaponEquipped = true;
+                meleeWeaponEquipped.SetActive(true);
+            }
         }
 
     }
@@ -105,11 +139,11 @@ public class PlayerMovement : MonoBehaviour
 
         movement = value.Get<Vector2>();
 
-    }*/0
+    }*/
     /*private void OnJump(InputValue value)
     {
 
-        if (value.isPressed == true && jumpBufferCounter > 0 && coyoteTimeCounter > 0)
+        if (value.isPressed == true && jumpBufferCounter > ()0 && coyoteTimeCounter > 0)
         {
             playerRB.AddForce(Vector3.up * playerJumpPower, ForceMode.Impulse);
             isGrounded = false;
